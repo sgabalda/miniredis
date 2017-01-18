@@ -1,0 +1,61 @@
+mini-redis design document:
+
+Objective:
+  * Implement a service that supports a subset of the Redis command set.
+
+Data Structures supported:  sets, lists and hashes.
+
+Implement the following com.avo.commands:
+
+  1.  SET key value
+  2.  SET key value EX seconds
+  3.  GET key
+  4.  DEL key
+  5.  DBSIZE
+  6.  INCR key
+  7.  ZADD key score member
+  8.  ZCARD key
+  9.  ZRANK key member
+  10. ZRANGE key start stop
+
+
+ All com.avo.commands should have the following properties:
+
+    * Atomicity:
+      guarantees atomic, ordered access to data.
+      ->Access from multiple thread is handled safely.
+
+    * Deliverable:
+      one way f invoking those com.avo.commands
+      should include test harness or set of tests cases to deomstrate funcitonality of implemented com.avo.commands
+
+
+ 1. SET key Value:
+ Set key to hold the string value. If key already holds a value, it is overwritten
+ return value: simple string reply: OK if set was executed correctly  Null reply is returned if conditions where not met
+
+ Notes:
+ When a set operation is performed whe should save the time where it was done (and requested?)
+ Application willing to set, should ask for the resource, if the resource is free, then he can proceed.
+  - Should we take into account order?
+ If resource is locked then he has to wait for it to become free. (What about order of requests?
+  (older requests should be discarded? Apparently not required)
+
+  Pseudo - code:
+
+    Resource free?
+      yes: Lock it and update key value.
+        -> save the time? (what time? local or client or both?)
+      no: queue the request.
+        -> shall the waiting be done in the "SET" class or in the "Resource class?" (TBD)
+
+
+  Conclusion:
+    We need a Resource entity (or entities) that handles operations on the resource
+      -> For instance: Resource for defining the data structure and resourcehandler for handling operations(?)
+    We need a SET entity that interfaces the SET command
+
+ 2. GET key [Value]
+
+  Get the value of key. If the key does not exist the special value nil is returned.
+  GET key value returns "ok" if the value stored is the value provided.
